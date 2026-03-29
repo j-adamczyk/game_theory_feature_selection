@@ -21,7 +21,9 @@ ignore = [
     # various other things
     "B028",     # simple warnings
     "C408",     # call dict(), list(), set()
+    "C901",     # complex code
     "E731",     # Lambda expressions
+    "PD011",    # Pandas .values
     "PERF203",  # `try`-`except` within a loop incurs performance overhead
     "PGH003",   # ignore types where necessary
     "PLC0415",  # imports inside functions/methods
