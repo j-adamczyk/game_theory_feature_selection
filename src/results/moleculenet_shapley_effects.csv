@@ -1,0 +1,10 @@
+dataset,task,score
+ESOL,regression,0.5791966497758757
+FreeSolv,regression,1.2880140554142525
+Lipophilicity,regression,0.5829884403899401
+BACE,classification,0.7908189880020866
+BBBP,classification,0.693383487654321
+HIV,classification,0.7369725178161032
+ClinTox,classification,0.8483248184061447
+SIDER,classification,0.6644894339318987
+Tox21,regression,0.09918928383590409

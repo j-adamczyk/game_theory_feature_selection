@@ -214,8 +214,14 @@ class MultioutputSelectFromModelL1(_MultioutputUnionSelector):
                 random_state=0,
             )
         else:
-            model = LassoCV(n_alphas=100, random_state=0, max_iter=1000)
+            model = LassoCV(
+                n_alphas=100,
+                random_state=0,
+                max_iter=1000,
+            )
         selector = SelectFromModel(estimator=model)
+        # ensure numerical stability for some edge cases (MoleculeACE)
+        X = np.ascontiguousarray(X, dtype=np.float64)
         selector.fit(X, y)
         return selector.get_support()
 
@@ -273,7 +279,7 @@ class MultioutputSAGE(_MultioutputImportanceSelector):
         n_bg = min(512, X.shape[0])
         imputer = sage.MarginalImputer(model, X[:n_bg])
         loss = "cross entropy" if self.task == "classification" else "mse"
-        estimator = sage.PermutationEstimator(imputer, loss)
+        estimator = sage.KernelEstimator(imputer, loss, random_state=0)
         return estimator(X, y).values
 
 
@@ -292,6 +298,6 @@ class MultioutputShapleyEffects(_MultioutputImportanceSelector):
         n_bg = min(512, X.shape[0])
         imputer = sage.MarginalImputer(model, X[:n_bg])
         loss = "cross entropy" if self.task == "classification" else "mse"
-        estimator = sage.PermutationEstimator(imputer, loss)
+        estimator = sage.KernelEstimator(imputer, loss, random_state=0)
         # no Y gives Shapley Effects
         return estimator(X).values
