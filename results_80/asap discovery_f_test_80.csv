@@ -1,0 +1,4 @@
+dataset,task,score
+MDR1-MDCKII,regression,6.034194766795046
+pIC50 SARS-CoV-2,regression,0.665458061919163
+pIC50 MERS-CoV,regression,0.5449786406059238

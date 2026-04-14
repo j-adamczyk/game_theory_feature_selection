@@ -9,7 +9,7 @@ from scipy.stats import rankdata
 RESULTS_DIR = Path(__file__).parent.parent / "results"
 PLOTS_DIR = Path(__file__).parent.parent / "plots"
 
-BENCHMARKS = ["moleculenet", "moleculeace", "tdc"]
+BENCHMARKS = ["asap discovery", "expansionrx", "moleculenet", "moleculeace", "tdc"]
 METHODS = [
     "none",
     "variance_threshold",
@@ -41,6 +41,8 @@ METHOD_LABELS = {
     "shapley_effects": "Shapley Effects (80%)",
 }
 BENCHMARK_LABELS = {
+    "asap discovery": "ASAP Discovery",
+    "expansionrx": "ExpansionRx",
     "moleculenet": "MoleculeNet",
     "moleculeace": "MoleculeACE",
     "tdc": "TDC",
@@ -99,7 +101,8 @@ def compute_ranks(data: pd.DataFrame) -> pd.DataFrame:
 
 def plot_avg_ranks(ranked: pd.DataFrame, methods: list[str]):
     """Bar chart of average rank per method: per benchmark + overall."""
-    fig, axes = plt.subplots(1, 4, figsize=(18, 5), sharey=True)
+    n_panels = len(BENCHMARKS) + 1
+    fig, axes = plt.subplots(1, n_panels, figsize=(5 * n_panels, 5), sharey=True)
     colors = plt.cm.Set2(np.linspace(0, 1, len(methods)))
 
     for idx, (key, title) in enumerate(
@@ -160,7 +163,7 @@ def plot_avg_scores(data: pd.DataFrame, methods: list[str]):
         panels.append(("all", "Overall"))
 
         fig, axes = plt.subplots(
-            1, len(panels), figsize=(5 * len(panels), 5), sharey=True
+            1, len(panels), figsize=(5 * len(panels), 5), sharey=(task == "classification")
         )
         if len(panels) == 1:
             axes = [axes]

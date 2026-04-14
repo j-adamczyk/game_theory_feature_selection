@@ -16,3 +16,6 @@ dependencies = [
     "sage-importance",
     "shap",
 ]
+
+[tool.uv.sources]
+scikit-fingerprints = { git = "https://github.com/MLCIL/scikit-fingerprints" }

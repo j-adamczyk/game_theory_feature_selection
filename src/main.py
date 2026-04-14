@@ -9,6 +9,8 @@ from skfp.datasets.moleculeace import (
     load_moleculeace_benchmark,
     load_moleculeace_splits,
 )
+from skfp.datasets.asap import load_asap_benchmark, load_asap_splits
+from skfp.datasets.expansionrx import load_expansionrx_benchmark, load_expansionrx_splits
 from skfp.datasets.moleculenet import load_moleculenet_benchmark, load_ogb_splits
 from skfp.datasets.tdc import load_tdc_benchmark, load_tdc_splits
 from skfp.fingerprints import RDKit2DDescriptorsFingerprint
@@ -108,17 +110,17 @@ def get_feature_selectors() -> list[tuple[str, Callable]]:
         return MultioutputShapleyEffects(task=task, percentile=80)
 
     return [
-        # ("none", _none),
-        # ("variance_threshold", _variance_threshold),
-        # ("f_test_80", _f_test_80),
-        # ("mutual_info_80", _mutual_info_80),
-        # ("correlation_threshold", _correlation_threshold),
-        # ("boruta", _boruta),
-        # ("hsic_lasso", _hsic_lasso),
-        # ("permutation_importance", _permutation_importance),
-        # ("rfecv", _rfecv),
-        # ("select_from_model_l1", _select_from_model_l1),
-        # ("shap", _shap),
+        ("none", _none),
+        ("variance_threshold", _variance_threshold),
+        ("f_test_80", _f_test_80),
+        ("mutual_info_80", _mutual_info_80),
+        ("correlation_threshold", _correlation_threshold),
+        ("boruta", _boruta),
+        ("hsic_lasso", _hsic_lasso),
+        ("permutation_importance", _permutation_importance),
+        ("rfecv", _rfecv),
+        ("select_from_model_l1", _select_from_model_l1),
+        ("shap", _shap),
         ("sage", _sage),
         ("shapley_effects", _shapley_effects),
     ]
@@ -174,12 +176,14 @@ if __name__ == "__main__":
         module=r"sklearn\.feature_selection\._univariate_selection",
     )
 
-    results_dir = Path().parent.parent.parent / "results"
+    results_dir = Path(__file__).parent.parent / "results"
     results_dir.mkdir(exist_ok=True)
 
     mol_from_smiles = MolFromSmilesTransformer(suppress_warnings=True)
 
     benchmarks = [
+        ("ASAP Discovery", load_asap_benchmark, load_asap_splits),
+        ("ExpansionRx", load_expansionrx_benchmark, load_expansionrx_splits),
         ("MoleculeNet", load_moleculenet_benchmark, load_ogb_splits),
         ("MoleculeACE", load_moleculeace_benchmark, load_moleculeace_splits),
         ("TDC", load_tdc_benchmark, load_tdc_splits),

@@ -237,7 +237,7 @@ requires-dist = [
     { name = "pyhsiclasso" },
     { name = "ruff" },
     { name = "sage-importance" },
-    { name = "scikit-fingerprints" },
+    { name = "scikit-fingerprints", git = "https://github.com/MLCIL/scikit-fingerprints" },
     { name = "shap" },
 ]
 
@@ -776,25 +776,20 @@ wheels = [
 
 [[package]]
 name = "scikit-fingerprints"
-version = "1.18.0"
-source = { registry = "https://pypi.org/simple" }
+version = "0.0.0"
+source = { git = "https://github.com/MLCIL/scikit-fingerprints#3766871d534d141ae34dd5f59de04ff4d515f92d" }
 dependencies = [
     { name = "descriptastorus" },
     { name = "e3fp" },
     { name = "huggingface-hub" },
     { name = "joblib" },
     { name = "mordredcommunity" },
-    { name = "numba" },
     { name = "numpy" },
     { name = "pandas" },
     { name = "rdkit" },
     { name = "scikit-learn" },
     { name = "scipy" },
     { name = "tqdm" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/c2/29/f349e5ece61c6c7ce8adddfde617e22e3f482c4fe93d8aa0aec8f60eaff2/scikit_fingerprints-1.18.0.tar.gz", hash = "sha256:19ff197d56a2682d7de0a6c57bbed3cd9ee8e9aaf98a1045b0bae0f1f07da344", size = 293738, upload-time = "2025-12-06T11:03:29.528Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/78/06/1bfe153a2a6ec60c889e23c3fd193919ec4abbaf037d860ed7cc2a4744c3/scikit_fingerprints-1.18.0-py3-none-any.whl", hash = "sha256:e1dd0e684fa79ac42d33dec12accda8b0a52c13114d2ae8f2485f60c4764ae95", size = 482226, upload-time = "2025-12-06T11:03:28.479Z" },
 ]
 
 [[package]]
