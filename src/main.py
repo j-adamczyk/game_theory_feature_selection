@@ -13,7 +13,7 @@ from skfp.datasets.asap import load_asap_benchmark, load_asap_splits
 from skfp.datasets.expansionrx import load_expansionrx_benchmark, load_expansionrx_splits
 from skfp.datasets.moleculenet import load_moleculenet_benchmark, load_ogb_splits
 from skfp.datasets.tdc import load_tdc_benchmark, load_tdc_splits
-from skfp.fingerprints import RDKit2DDescriptorsFingerprint
+from skfp.fingerprints import RDKit2DDescriptorsFingerprint, MordredFingerprint
 from skfp.metrics import (
     extract_pos_proba,
     multioutput_auroc_score,
@@ -31,8 +31,12 @@ from sklearn.feature_selection import (
 from sklearn.impute import SimpleImputer
 
 from src.feature_selection import (
+    SignSAGE,
+    SignShapleyEffects,
     MultioutputBoruta,
     MultioutputHSICLasso,
+    MultioutputMissingnessAwareSAGE,
+    MultioutputMissingnessAwareShapleyEffects,
     MultioutputPermutationImportance,
     MultioutputRFECV,
     MultioutputSAGE,
@@ -109,6 +113,20 @@ def get_feature_selectors() -> list[tuple[str, Callable]]:
     def _shapley_effects(task: str) -> MultioutputShapleyEffects:
         return MultioutputShapleyEffects(task=task, percentile=80)
 
+    def _sign_sage(task: str) -> SignSAGE:
+        return SignSAGE(task=task)
+
+    def _sign_shapley_effects(task: str) -> SignShapleyEffects:
+        return SignShapleyEffects(task=task)
+
+    def _missingness_aware_sage(task: str) -> MultioutputMissingnessAwareSAGE:
+        return MultioutputMissingnessAwareSAGE(task=task, percentile=80)
+
+    def _missingness_aware_shapley_effects(
+        task: str,
+    ) -> MultioutputMissingnessAwareShapleyEffects:
+        return MultioutputMissingnessAwareShapleyEffects(task=task, percentile=80)
+
     return [
         ("none", _none),
         ("variance_threshold", _variance_threshold),
@@ -123,6 +141,10 @@ def get_feature_selectors() -> list[tuple[str, Callable]]:
         ("shap", _shap),
         ("sage", _sage),
         ("shapley_effects", _shapley_effects),
+        ("sign_sage", _sign_sage),
+        ("sign_shapley_effects", _sign_shapley_effects),
+        ("missingness_aware_sage", _missingness_aware_sage),
+        ("missingness_aware_shapley_effects", _missingness_aware_shapley_effects),
     ]
 
 
@@ -134,8 +156,14 @@ def train_and_eval(
     selector: TransformerMixin | None,
 ) -> tuple[str, float]:
     fp = RDKit2DDescriptorsFingerprint(n_jobs=-1)
+    # fp = MordredFingerprint(n_jobs=-1)
     X_train = fp.transform(mols_train)
     X_test = fp.transform(mols_test)
+
+    # remove features with >= 50% missing values
+    missing_mask = np.mean(np.isnan(X_train), axis=0) < 0.5
+    X_train = X_train[:, missing_mask]
+    X_test = X_test[:, missing_mask]
 
     # always remove constant features, LightGBM ignores them anyway
     var_thresh = VarianceThreshold()
@@ -188,6 +216,7 @@ if __name__ == "__main__":
         ("MoleculeACE", load_moleculeace_benchmark, load_moleculeace_splits),
         ("TDC", load_tdc_benchmark, load_tdc_splits),
     ]
+
 
     for fs_name, get_selector in get_feature_selectors():
         print(f"Feature selection: {fs_name}")

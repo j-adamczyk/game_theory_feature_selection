@@ -12,67 +12,9 @@ from sklearn.inspection import permutation_importance
 from sklearn.linear_model import LassoCV, LogisticRegressionCV
 from sklearn.model_selection import KFold, StratifiedKFold
 
+from bases import _MultioutputUnionSelector, _MultioutputSignSelector, _MultioutputImportanceSelector, \
+    _MissingnessImputer
 from src.utils import get_single_task_lgbm
-
-
-class _MultioutputUnionSelector(BaseEstimator, TransformerMixin):
-    """
-    Base for selectors that produce a boolean mask per target and OR them.
-
-    Subclasses implement ``_select_single(X, y) -> np.ndarray[bool]``.
-    """
-
-    def _select_single(self, X: np.ndarray, y: np.ndarray) -> np.ndarray:
-        raise NotImplementedError
-
-    def fit(self, X: np.ndarray, y: np.ndarray):
-        n_features = X.shape[1]
-        if y.ndim == 1:
-            self.mask_ = self._select_single(X, y)
-        else:
-            combined = np.zeros(n_features, dtype=bool)
-            for i in range(y.shape[1]):
-                combined |= self._select_single(X, y[:, i])
-            self.mask_ = combined
-
-        if not self.mask_.any():
-            self.mask_ = np.ones(n_features, dtype=bool)
-        return self
-
-    def transform(self, X: np.ndarray) -> np.ndarray:
-        return X[:, self.mask_]
-
-
-class _MultioutputImportanceSelector(BaseEstimator, TransformerMixin):
-    """
-    Base for selectors that score features per target, average, then threshold.
-
-    Subclasses implement ``_importances_single(X, y) -> np.ndarray[float]``
-    and set ``self.percentile``.
-    """
-
-    def _importances_single(self, X: np.ndarray, y: np.ndarray) -> np.ndarray:
-        raise NotImplementedError
-
-    def fit(self, X: np.ndarray, y: np.ndarray):
-        if y.ndim == 1:
-            importances = self._importances_single(X, y)
-        else:
-            all_imp = [self._importances_single(X, y[:, i]) for i in range(y.shape[1])]
-            importances = np.mean(all_imp, axis=0)
-
-        finite = importances[np.isfinite(importances)]
-        threshold = np.percentile(finite, 100 - self.percentile)
-        self.mask_ = importances >= threshold
-        if not self.mask_.any():
-            self.mask_ = np.ones(len(importances), dtype=bool)
-        return self
-
-    def transform(self, X: np.ndarray) -> np.ndarray:
-        return X[:, self.mask_]
-
-
-# concrete feature selectors
 
 
 class MultioutputSelectPercentile(_MultioutputImportanceSelector):
@@ -300,4 +242,90 @@ class MultioutputShapleyEffects(_MultioutputImportanceSelector):
         loss = "cross entropy" if self.task == "classification" else "mse"
         estimator = sage.KernelEstimator(imputer, loss, random_state=0)
         # no Y gives Shapley Effects
-        return estimator(X).values
+        return estimator(X, y).values
+
+
+class SignSAGE(_MultioutputSignSelector):
+    """
+    SAGE values via SignEstimator. Faster than KernelEstimator; removes only
+    features that hurt performance (negative SAGE values).
+    """
+
+    def __init__(self, task: str = "classification"):
+        self.task = task
+
+    def _importances_single(self, X: np.ndarray, y: np.ndarray) -> np.ndarray:
+        model = get_single_task_lgbm(self.task)
+        model.fit(X, y)
+        n_bg = min(512, X.shape[0])
+        imputer = sage.MarginalImputer(model, X[:n_bg])
+        loss = "cross entropy" if self.task == "classification" else "mse"
+        estimator = sage.SignEstimator(imputer, loss, random_state=0)
+        return estimator(X[:n_bg], y[:n_bg], bar=False).values
+
+
+class SignShapleyEffects(_MultioutputSignSelector):
+    """
+    Shapley Effects via SignEstimator (unsupervised). Faster than KernelEstimator;
+    removes only features that hurt performance (negative values).
+    """
+
+    def __init__(self, task: str = "classification"):
+        self.task = task
+
+    def _importances_single(self, X: np.ndarray, y: np.ndarray) -> np.ndarray:
+        model = get_single_task_lgbm(self.task)
+        model.fit(X, y)
+        n_bg = min(512, X.shape[0])
+        imputer = sage.MarginalImputer(model, X[:n_bg])
+        loss = "cross entropy" if self.task == "classification" else "mse"
+        estimator = sage.SignEstimator(imputer, loss, random_state=0)
+        # no Y gives Shapley Effects
+        return estimator(X[:n_bg], bar=False).values
+
+
+class MultioutputMissingnessAwareSAGE(_MultioutputImportanceSelector):
+    """
+    SAGE values using LightGBM's native missingness handling.
+
+    Held-out features are set to NaN rather than imputed from a marginal
+    distribution, so the model itself absorbs the uncertainty.  This is the
+    approach described (but not demonstrated) in the SAGE paper as an
+    alternative to MarginalImputer.
+    """
+
+    def __init__(self, task: str = "classification", percentile: int = 80):
+        self.task = task
+        self.percentile = percentile
+
+    def _importances_single(self, X: np.ndarray, y: np.ndarray) -> np.ndarray:
+        model = get_single_task_lgbm(self.task)
+        model.fit(X, y)
+        n_eval = min(512, X.shape[0])
+        imputer = _MissingnessImputer(model, X.shape[1])
+        loss = "cross entropy" if self.task == "classification" else "mse"
+        estimator = sage.KernelEstimator(imputer, loss, random_state=0)
+        return estimator(X[:n_eval], y[:n_eval], thresh=0.05, bar=False).values
+
+
+class MultioutputMissingnessAwareShapleyEffects(_MultioutputImportanceSelector):
+    """
+    Shapley Effects (unsupervised) using LightGBM's native missingness handling.
+
+    Held-out features are set to NaN rather than imputed from a marginal
+    distribution, so the model itself absorbs the uncertainty.
+    """
+
+    def __init__(self, task: str = "classification", percentile: int = 80):
+        self.task = task
+        self.percentile = percentile
+
+    def _importances_single(self, X: np.ndarray, y: np.ndarray) -> np.ndarray:
+        model = get_single_task_lgbm(self.task)
+        model.fit(X, y)
+        n_eval = min(512, X.shape[0])
+        imputer = _MissingnessImputer(model, X.shape[1])
+        loss = "cross entropy" if self.task == "classification" else "mse"
+        estimator = sage.KernelEstimator(imputer, loss, random_state=0)
+        # no Y gives Shapley Effects
+        return estimator(X[:n_eval], thresh=0.05, bar=False).values

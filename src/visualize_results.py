@@ -24,6 +24,10 @@ METHODS = [
     "shap",
     "sage",
     "shapley_effects",
+    "sign_sage",
+    "sign_shapley_effects",
+    "missingness_aware_sage",
+    "missingness_aware_shapley_effects",
 ]
 METHOD_LABELS = {
     "none": "No selection",
@@ -39,6 +43,10 @@ METHOD_LABELS = {
     "shap": "SHAP (80%)",
     "sage": "SAGE (80%)",
     "shapley_effects": "Shapley Effects (80%)",
+    "sign_sage": "Sign SAGE",
+    "sign_shapley_effects": "Sign Shapley Effects",
+    "missingness_aware_sage": "Missingness SAGE (80%)",
+    "missingness_aware_shapley_effects": "Missingness Shapley Effects (80%)",
 }
 BENCHMARK_LABELS = {
     "asap discovery": "ASAP Discovery",
