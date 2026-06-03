@@ -204,7 +204,7 @@ if __name__ == "__main__":
         module=r"sklearn\.feature_selection\._univariate_selection",
     )
 
-    results_dir = Path(__file__).parent.parent / "results"
+    results_dir = Path(__file__).parent.parent / "results_mordred"
     results_dir.mkdir(exist_ok=True)
 
     mol_from_smiles = MolFromSmilesTransformer(suppress_warnings=True)
@@ -224,7 +224,7 @@ if __name__ == "__main__":
         for benchmark_name, benchmark_loader, splits_loader in benchmarks:
             print(f"\tBenchmark: {benchmark_name}")
 
-            # reuse already computed results if available
+            # reuse already computed results_mordred if available
             results_path = results_dir / f"{benchmark_name.lower()}_{fs_name}.csv"
             if results_path.exists():
                 existing_df = pd.read_csv(results_path)

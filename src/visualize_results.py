@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from scipy.stats import rankdata
 
-RESULTS_DIR = Path(__file__).parent.parent / "results"
+RESULTS_DIR = Path(__file__).parent.parent / "results_mordred"
 PLOTS_DIR = Path(__file__).parent.parent / "plots"
 
 BENCHMARKS = ["asap discovery", "expansionrx", "moleculenet", "moleculeace", "tdc"]
