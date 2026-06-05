@@ -1,0 +1,10 @@
+dataset,task,score
+LogD,regression,0.5759285320513883
+KSOL,regression,97.17226636084415
+HLM CLint,regression,22.780271037385482
+RLM CLint,regression,87.32044541430342
+MLM CLint,regression,226.53145818824513
+Caco-2 Permeability Papp A>B,regression,6.222777278149167
+Caco-2 Permeability Efflux,regression,17.500319868312044
+MPPB,regression,9.84286434950001
+MBPB,regression,3.451267768579218
